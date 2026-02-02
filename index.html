@@ -35,7 +35,26 @@
                     <label class="text-xs text-zinc-500">Balance ($)</label>
                     <input type="text" value="1000" class="w-full bg-black p-2 rounded border border-zinc-700 mt-1">
                 </div>
-                <button class="w-full bg-green-500 text-black font-bold py-3 rounded-xl hover:bg-green-400 transition">Execute Alpha Trade</button>
+                <<button onclick="executeTrade()" class="w-full bg-green-500 text-black font-bold py-3 rounded-xl hover:bg-green-400 transition">
+  Execute Alpha Trade
+</button>
+
+<button onclick="getNews()" class="w-full bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-400 transition mt-4">
+  Get Market News
+</button>
+
+<script>
+  async function executeTrade() {
+    const res = await fetch('/api/trade', { method: 'POST' });
+    if(res.ok) alert("Trade Signal Sent!");
+  }
+
+  async function getNews() {
+    const res = await fetch('/api/news', { method: 'POST' });
+    if(res.ok) alert("News Alert Sent!");
+  }
+</script>
+>
             </div>
         </div>
     </div>
