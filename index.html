@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,17 +41,17 @@
         </div>
 
         <div class="bg-zinc-900 p-6 rounded-3xl border border-zinc-800">
-            <h3 class="text-lg font-bold mb-4">Risk Auditor</h3>
+            <h3 class="text-lg font-bold mb-4 text-white">Risk Auditor</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="text-xs text-zinc-500">Balance ($)</label>
-                    <input id="balance-input" type="text" value="1000" class="w-full bg-black p-2 rounded border border-zinc-700 mt-1">
+                    <label class="text-xs text-zinc-500 uppercase tracking-widest">Balance ($)</label>
+                    <input id="balance-input" type="text" value="1000" class="w-full bg-black p-3 rounded-xl border border-zinc-700 mt-1 text-white focus:outline-none focus:border-green-500">
                 </div>
-                <button onclick="executeTrade()" class="w-full bg-green-500 text-black font-bold py-3 rounded-xl hover:bg-green-400 transition">
+                <button onclick="executeTrade()" class="w-full bg-green-500 text-black font-bold py-3 rounded-xl hover:bg-green-400 transition uppercase tracking-tighter">
                     Execute Alpha Trade
                 </button>
-                <button onclick="getNews()" class="w-full bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-400 transition mt-2">
-                    Get Market News
+                <button onclick="getNews()" class="w-full bg-zinc-800 text-white font-bold py-3 rounded-xl hover:bg-zinc-700 transition uppercase tracking-tighter">
+                    Get Alpha News
                 </button>
             </div>
         </div>
@@ -64,37 +65,27 @@
                 const data = await response.json();
                 const price = parseFloat(data.price).toLocaleString(undefined, { minimumFractionDigits: 2 });
                 document.getElementById('btc-price').innerText = `$${price}`;
-            } catch (e) { 
-                console.error("Price fetch error"); 
-            }
+            } catch (e) { console.error("Price sync error"); }
         }
 
-        // Telegram Logic for Trade Execution
+        // Send Trade to Telegram
         async function executeTrade() {
-            const currentPrice = document.getElementById('btc-price').innerText;
+            const price = document.getElementById('btc-price').innerText;
             const balance = document.getElementById('balance-input').value;
-
-            // Sends data to your api/trade.js file
             const res = await fetch('/api/trade', { 
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ price: currentPrice, balance: balance })
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ price, balance })
             });
-
-            if(res.ok) {
-                alert("🚀 Alpha Trade Signal Sent to Telegram!");
-            } else {
-                alert("❌ Connection Error. Check Vercel Logs.");
-            }
+            if(res.ok) alert("🚀 Signal Sent to Telegram!");
         }
 
-        // Telegram Logic for News
+        // Send News to Telegram
         async function getNews() {
             const res = await fetch('/api/news', { method: 'POST' });
-            if(res.ok) alert("📰 Market News Sent to Telegram!");
+            if(res.ok) alert("📰 News Sent to Telegram!");
         }
 
-        // Run price update on load and every 10 seconds
         updatePrice();
         setInterval(updatePrice, 10000);
     </script>
