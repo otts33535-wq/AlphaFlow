@@ -1,0 +1,17 @@
+export default async function handler(req, res) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: "🚀 **Alpha Trade Executed**\nStrong Bullish Bias detected.",
+      parse_mode: "Markdown"
+    }),
+  });
+
+  const data = await response.json();
+  res.status(200).json(data);
+}
