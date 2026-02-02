@@ -16,6 +16,17 @@
         <div class="text-sm bg-zinc-900 px-4 py-2 rounded-full border border-zinc-800">Market Status: <span class="text-green-400">● LIVE</span></div>
     </nav>
 
+    <div class="bg-zinc-900 p-6 rounded-3xl border border-zinc-800 glow mb-6 text-center">
+        <div class="flex items-center justify-center gap-2 mb-1">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <p class="text-zinc-400 text-xs uppercase tracking-widest">Live BTC/USDT</p>
+        </div>
+        <h2 id="btc-price" class="text-5xl font-black text-white">$0.00</h2>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div class="md:col-span-2 bg-zinc-900 p-8 rounded-3xl border border-zinc-800 glow">
             <h2 class="text-zinc-400 text-sm uppercase tracking-widest mb-2">Master Trade Confidence</h2>
@@ -28,74 +39,65 @@
             </div>
         </div>
 
-        <<div class="bg-gray-800 p-6 rounded-2xl mb-6 text-center border border-gray-700">
-  <p class="text-gray-400 text-xs uppercase tracking-widest mb-1">Live Bitcoin Price</p>
-  <h2 id="btc-price" class="text-4xl font-black text-green-400">Loading...</h2>
-</div>
->
+        <div class="bg-zinc-900 p-6 rounded-3xl border border-zinc-800">
             <h3 class="text-lg font-bold mb-4">Risk Auditor</h3>
             <div class="space-y-4">
                 <div>
                     <label class="text-xs text-zinc-500">Balance ($)</label>
-                    <input type="text" value="1000" class="w-full bg-black p-2 rounded border border-zinc-700 mt-1">
+                    <input id="balance-input" type="text" value="1000" class="w-full bg-black p-2 rounded border border-zinc-700 mt-1">
                 </div>
-                <<button onclick="executeTrade()" class="w-full bg-green-500 text-black font-bold py-3 rounded-xl hover:bg-green-400 transition"> <div class="bg-gray-800 p-6 rounded-2xl mb-6 text-center border border-gray-700">
-  <p class="text-gray-400 text-xs uppercase tracking-widest mb-1">Live Bitcoin Price</p>
-  <h2 id="btc-price" class="text-4xl font-black text-green-400">Loading...</h2>
-</div>
-
-  Execute Alpha Trade 
-</button>
-
-<button onclick="getNews()" class="w-full bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-400 transition mt-4">
-  Get Market News
-</button>
-
-<script>
-  async function executeTrade() {
-    const res = await fetch('/api/trade', { method: 'POST' });
-    if(res.ok) alert("Trade Signal Sent!");
-  }
-
-  async function getNews() {
-    const res = await fetch('/api/news', { method: 'POST' });
-    if(res.ok) alert("News Alert Sent!");
-  }
-</script>
->
+                <button onclick="executeTrade()" class="w-full bg-green-500 text-black font-bold py-3 rounded-xl hover:bg-green-400 transition">
+                    Execute Alpha Trade
+                </button>
+                <button onclick="getNews()" class="w-full bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-400 transition mt-2">
+                    Get Market News
+                </button>
             </div>
         </div>
     </div>
+
+    <script>
+        // Update Live Price from Binance
+        async function updatePrice() {
+            try {
+                const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+                const data = await response.json();
+                const price = parseFloat(data.price).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                document.getElementById('btc-price').innerText = `$${price}`;
+            } catch (e) { 
+                console.error("Price fetch error"); 
+            }
+        }
+
+        // Telegram Logic for Trade Execution
+        async function executeTrade() {
+            const currentPrice = document.getElementById('btc-price').innerText;
+            const balance = document.getElementById('balance-input').value;
+
+            // Sends data to your api/trade.js file
+            const res = await fetch('/api/trade', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ price: currentPrice, balance: balance })
+            });
+
+            if(res.ok) {
+                alert("🚀 Alpha Trade Signal Sent to Telegram!");
+            } else {
+                alert("❌ Connection Error. Check Vercel Logs.");
+            }
+        }
+
+        // Telegram Logic for News
+        async function getNews() {
+            const res = await fetch('/api/news', { method: 'POST' });
+            if(res.ok) alert("📰 Market News Sent to Telegram!");
+        }
+
+        // Run price update on load and every 10 seconds
+        updatePrice();
+        setInterval(updatePrice, 10000);
+    </script>
 </body>
 </html>
-<script>
-  // 1. Function to fetch Live BTC Price from Binance
-  async function updatePrice() {
-    try {
-      const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
-      const data = await response.json();
-      const price = parseFloat(data.price).toLocaleString(undefined, { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-      });
-      document.getElementById('btc-price').innerText = `$${price}`;
-    } catch (error) {
-      document.getElementById('btc-price').innerText = "Syncing...";
-    }
-  }
 
-  // 2. Functions for your Telegram Buttons
-  async function executeTrade() {
-    const res = await fetch('/api/trade', { method: 'POST' });
-    if(res.ok) alert("🚀 Trade Signal Sent to Telegram!");
-  }
-
-  async function getNews() {
-    const res = await fetch('/api/news', { method: 'POST' });
-    if(res.ok) alert("📰 News Alert Sent to Telegram!");
-  }
-
-  // 3. Start the loops
-  updatePrice(); // Run immediately
-  setInterval(updatePrice, 60000); // Refresh every 60 seconds
-</script>
