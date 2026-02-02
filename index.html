@@ -28,15 +28,23 @@
             </div>
         </div>
 
-        <div class="bg-zinc-900 p-6 rounded-3xl border border-zinc-800">
+        <<div class="bg-gray-800 p-6 rounded-2xl mb-6 text-center border border-gray-700">
+  <p class="text-gray-400 text-xs uppercase tracking-widest mb-1">Live Bitcoin Price</p>
+  <h2 id="btc-price" class="text-4xl font-black text-green-400">Loading...</h2>
+</div>
+>
             <h3 class="text-lg font-bold mb-4">Risk Auditor</h3>
             <div class="space-y-4">
                 <div>
                     <label class="text-xs text-zinc-500">Balance ($)</label>
                     <input type="text" value="1000" class="w-full bg-black p-2 rounded border border-zinc-700 mt-1">
                 </div>
-                <<button onclick="executeTrade()" class="w-full bg-green-500 text-black font-bold py-3 rounded-xl hover:bg-green-400 transition">
-  Execute Alpha Trade
+                <<button onclick="executeTrade()" class="w-full bg-green-500 text-black font-bold py-3 rounded-xl hover:bg-green-400 transition"> <div class="bg-gray-800 p-6 rounded-2xl mb-6 text-center border border-gray-700">
+  <p class="text-gray-400 text-xs uppercase tracking-widest mb-1">Live Bitcoin Price</p>
+  <h2 id="btc-price" class="text-4xl font-black text-green-400">Loading...</h2>
+</div>
+
+  Execute Alpha Trade 
 </button>
 
 <button onclick="getNews()" class="w-full bg-blue-500 text-white font-bold py-3 rounded-xl hover:bg-blue-400 transition mt-4">
@@ -60,3 +68,34 @@
     </div>
 </body>
 </html>
+<script>
+  // 1. Function to fetch Live BTC Price from Binance
+  async function updatePrice() {
+    try {
+      const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+      const data = await response.json();
+      const price = parseFloat(data.price).toLocaleString(undefined, { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+      });
+      document.getElementById('btc-price').innerText = `$${price}`;
+    } catch (error) {
+      document.getElementById('btc-price').innerText = "Syncing...";
+    }
+  }
+
+  // 2. Functions for your Telegram Buttons
+  async function executeTrade() {
+    const res = await fetch('/api/trade', { method: 'POST' });
+    if(res.ok) alert("🚀 Trade Signal Sent to Telegram!");
+  }
+
+  async function getNews() {
+    const res = await fetch('/api/news', { method: 'POST' });
+    if(res.ok) alert("📰 News Alert Sent to Telegram!");
+  }
+
+  // 3. Start the loops
+  updatePrice(); // Run immediately
+  setInterval(updatePrice, 60000); // Refresh every 60 seconds
+</script>
