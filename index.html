@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,6 +22,7 @@
         .market-status { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
         .status-dot { width: 8px; height: 8px; background: var(--up-color); border-radius: 50%; box-shadow: 0 0 10px var(--up-color); animation: blink 2s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
         main { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 25px; }
         .price-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
         .price-card {
@@ -34,22 +34,29 @@
         .price { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
         .change { font-size: 15px; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: center; gap: 5px; }
         .up { color: var(--up-color); } .down { color: var(--down-color); }
+        
         .trade-btn {
             display: block; width: 100%; padding: 12px 0; background: var(--accent);
             color: #000; text-decoration: none; border-radius: 10px; font-weight: 800; font-size: 13px;
         }
-        .ticker-wrap { background: #1e2329; border-top: 1px solid #2b3139; padding: 12px 0; overflow: hidden; white-space: nowrap; }
-        .ticker { display: inline-block; animation: scroll 60s linear infinite; }
-        .news-item { display: inline-block; padding: 0 40px; color: var(--text-main); font-size: 14px; text-decoration: none; border-right: 1px solid #333; }
+
+        /* News Ticker Styling */
+        .ticker-wrap { background: #1e2329; border-top: 1px solid #2b3139; padding: 14px 0; overflow: hidden; white-space: nowrap; }
+        .ticker { display: inline-block; animation: scroll 80s linear infinite; }
+        .ticker:hover { animation-play-state: paused; }
+        .news-item { display: inline-block; padding: 0 50px; color: var(--text-main); font-size: 14px; text-decoration: none; border-right: 1px solid #333; }
         .news-item b { color: var(--accent); margin-right: 10px; }
+
         @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
     </style>
 </head>
 <body>
+
 <header>
     <div class="logo">ALPHAFLOW <span style="color:white">PRO</span></div>
     <div class="market-status"><div class="status-dot"></div> NETWORK: ACTIVE</div>
 </header>
+
 <main>
     <div class="price-container">
         <div class="price-card">
@@ -66,35 +73,43 @@
         </div>
     </div>
 </main>
+
 <div class="ticker-wrap">
     <div id="news-ticker" class="ticker">
-        <a class="news-item"><b>MARKET</b> BITCOIN INSTITUTIONAL ADOPTION INCREASING</a>
-        <a class="news-item"><b>STELLAR</b> XLM NETWORK NODES REPORT 100% UPTIME</a>
-        <a class="news-item"><b>ALPHA</b> NEW TRADING PAIRS COMING SOON TO ALPHAFLOW</a>
-        <a class="news-item"><b>GLOBAL</b> CRYPTO MARKET CAP STABILIZES ABOVE 2T</a>
+        <a class="news-item"><b>ALPHA</b> Loading live global crypto intelligence...</a>
+        <a class="news-item"><b>MARKET</b> Bitcoin institutional flow reaching new highs</a>
+        <a class="news-item"><b>NETWORK</b> Stellar XLM infrastructure reports 100% uptime</a>
     </div>
 </div>
+
 <script>
     async function updateData() {
         try {
+            // Fetch Prices
             const pRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,stellar&vs_currencies=usd&include_24hr_change=true');
             const pData = await pRes.json();
             setPriceUI('btc', pData.bitcoin);
             setPriceUI('xlm', pData.stellar);
 
-            // Attempt to fetch live news
-            const nRes = await fetch('https://free-crypto-news.vercel.app/api/news?limit=8');
+            // Fetch News using a PROXY to bypass CORS blocks
+            const rssUrl = 'https://cointelegraph.com/rss/tag/bitcoin';
+            const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`)}`;
+            
+            const nRes = await fetch(proxyUrl);
             const nData = await nRes.json();
-            if(nData && nData.length > 0) {
-                document.getElementById('news-ticker').innerHTML = nData.map(item => `
-                    <a href="${item.url}" target="_blank" class="news-item">
-                        <b>LIVE</b> ${item.title.toUpperCase()}
+            
+            if(nData.items && nData.items.length > 0) {
+                const ticker = document.getElementById('news-ticker');
+                ticker.innerHTML = nData.items.map(item => `
+                    <a href="${item.link}" target="_blank" class="news-item">
+                        <b>LIVE NEWS</b> ${item.title.toUpperCase()}
                     </a>`).join('');
             }
-        } catch (err) { 
-            console.log("Using fail-safe news feed."); 
+        } catch (err) {
+            console.log("News sync error - showing local feed");
         }
     }
+
     function setPriceUI(id, data) {
         document.getElementById(`${id}-price`).innerText = '$' + (id === 'btc' ? data.usd.toLocaleString() : data.usd.toFixed(4));
         const chg = data.usd_24h_change;
@@ -102,6 +117,7 @@
         el.className = `change ${chg >= 0 ? 'up' : 'down'}`;
         el.innerText = (chg >= 0 ? '▲ +' : '▼ ') + chg.toFixed(2) + '%';
     }
+
     updateData();
     setInterval(updateData, 30000); 
 </script>
