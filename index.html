@@ -4,91 +4,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AlphaFlow | AI Trading Intelligence</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>AlphaFlow Market Data</title>
     <style>
-        body { background-color: #0a0a0b; color: #e4e4e7; font-family: 'Inter', sans-serif; }
-        .glow { box-shadow: 0 0 20px rgba(34, 197, 94, 0.2); }
+        :root {
+            --bg: #0b0e11;
+            --card-bg: #161a1e;
+            --btc-color: #F7931A;
+            --xlm-color: #08b1e7;
+            --text-main: #ffffff;
+            --text-dim: #848e9c;
+        }
+
+        body { 
+            background-color: var(--bg); 
+            color: var(--text-main); 
+            font-family: 'Inter', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            gap: 15px; 
+            padding-top: 100px;
+        }
+
+        .price-card {
+            background: var(--card-bg);
+            border: 1px solid #2b2f36;
+            border-radius: 16px;
+            padding: 20px;
+            min-width: 180px;
+            transition: transform 0.2s;
+        }
+
+        .price-card:hover { transform: translateY(-5px); border-color: #474d57; }
+
+        .symbol { font-size: 14px; color: var(--text-dim); font-weight: 600; margin-bottom: 8px; }
+        
+        .price { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+
+        #btc-price { color: var(--btc-color); }
+        #xlm-price { color: var(--xlm-color); }
+
+        .update-indicator {
+            font-size: 10px;
+            color: #474d57;
+            margin-top: 12px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
-<body class="p-6">
-    <nav class="flex justify-between items-center mb-10">
-        <h1 class="text-2xl font-bold tracking-tighter text-green-500">ALPHAFLOW <span class="text-white text-xs border border-white/20 px-1 rounded">PRO</span></h1>
-        <div class="text-sm bg-zinc-900 px-4 py-2 rounded-full border border-zinc-800">Market Status: <span class="text-green-400">● LIVE</span></div>
-    </nav>
+<body>
 
-    <div class="bg-zinc-900 p-6 rounded-3xl border border-zinc-800 glow mb-6 text-center">
-        <div class="flex items-center justify-center gap-2 mb-1">
-            <span class="relative flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-            </span>
-            <p class="text-zinc-400 text-xs uppercase tracking-widest">Live BTC/USDT</p>
-        </div>
-        <h2 id="btc-price" class="text-5xl font-black text-white">$0.00</h2>
+    <div class="price-card">
+        <div class="symbol">BTC / USD</div>
+        <div id="btc-price" class="price">Calculating...</div>
+        <div class="update-indicator">Live Updates</div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="md:col-span-2 bg-zinc-900 p-8 rounded-3xl border border-zinc-800 glow">
-            <h2 class="text-zinc-400 text-sm uppercase tracking-widest mb-2">Master Trade Confidence</h2>
-            <div class="flex items-center gap-10">
-                <div class="text-7xl font-black text-white">88%</div>
-                <div>
-                    <div class="text-green-400 font-bold text-xl uppercase">Strong Bullish Bias</div>
-                    <p class="text-zinc-500 text-sm">Confluence detected: RSI Oversold + Positive GDP News</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-zinc-900 p-6 rounded-3xl border border-zinc-800">
-            <h3 class="text-lg font-bold mb-4 text-white">Risk Auditor</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-xs text-zinc-500 uppercase tracking-widest">Balance ($)</label>
-                    <input id="balance-input" type="text" value="1000" class="w-full bg-black p-3 rounded-xl border border-zinc-700 mt-1 text-white focus:outline-none focus:border-green-500">
-                </div>
-                <button onclick="executeTrade()" class="w-full bg-green-500 text-black font-bold py-3 rounded-xl hover:bg-green-400 transition uppercase tracking-tighter">
-                    Execute Alpha Trade
-                </button>
-                <button onclick="getNews()" class="w-full bg-zinc-800 text-white font-bold py-3 rounded-xl hover:bg-zinc-700 transition uppercase tracking-tighter">
-                    Get Alpha News
-                </button>
-            </div>
-        </div>
+    <div class="price-card">
+        <div class="symbol">XLM / USD</div>
+        <div id="xlm-price" class="price">Calculating...</div>
+        <div class="update-indicator">Live Updates</div>
     </div>
 
     <script>
-        // Update Live Price from Binance
-        async function updatePrice() {
+        async function updatePrices() {
             try {
-                const response = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,stellar&vs_currencies=usd');
                 const data = await response.json();
-                const price = parseFloat(data.price).toLocaleString(undefined, { minimumFractionDigits: 2 });
-                document.getElementById('btc-price').innerText = `$${price}`;
-            } catch (e) { console.error("Price sync error"); }
+                
+                // Format BTC to 0 decimal places, XLM to 4
+                document.getElementById('btc-price').innerText = '$' + data.bitcoin.usd.toLocaleString();
+                document.getElementById('xlm-price').innerText = '$' + data.stellar.usd.toFixed(4);
+            } catch (e) {
+                console.log("Network lag, retrying...");
+            }
         }
 
-        // Send Trade to Telegram
-        async function executeTrade() {
-            const price = document.getElementById('btc-price').innerText;
-            const balance = document.getElementById('balance-input').value;
-            const res = await fetch('/api/trade', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ price, balance })
-            });
-            if(res.ok) alert("🚀 Signal Sent to Telegram!");
-        }
-
-        // Send News to Telegram
-        async function getNews() {
-            const res = await fetch('/api/news', { method: 'POST' });
-            if(res.ok) alert("📰 News Sent to Telegram!");
-        }
-
-        updatePrice();
-        setInterval(updatePrice, 10000);
+        updatePrices();
+        setInterval(updatePrices, 20000); // Refreshes every 20 seconds
     </script>
 </body>
 </html>
-
