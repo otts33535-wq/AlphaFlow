@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,7 +35,6 @@
         .price { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
         .change { font-size: 15px; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: center; gap: 5px; }
         .up { color: var(--up-color); } .down { color: var(--down-color); }
-        
         .trade-btn {
             display: block; width: 100%; padding: 12px 0; background: var(--accent);
             color: #000; text-decoration: none; border-radius: 10px; font-weight: 800; font-size: 13px;
@@ -44,7 +44,7 @@
         .ticker-wrap { background: #1e2329; border-top: 1px solid #2b3139; padding: 14px 0; overflow: hidden; white-space: nowrap; }
         .ticker { display: inline-block; animation: scroll 80s linear infinite; }
         .ticker:hover { animation-play-state: paused; }
-        .news-item { display: inline-block; padding: 0 50px; color: var(--text-main); font-size: 14px; text-decoration: none; border-right: 1px solid #333; }
+        .news-item { display: inline-block; padding: 0 60px; color: var(--text-main); font-size: 14px; text-decoration: none; border-right: 1px solid #333; }
         .news-item b { color: var(--accent); margin-right: 10px; }
 
         @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
@@ -76,37 +76,35 @@
 
 <div class="ticker-wrap">
     <div id="news-ticker" class="ticker">
-        <a class="news-item"><b>ALPHA</b> Loading live global crypto intelligence...</a>
-        <a class="news-item"><b>MARKET</b> Bitcoin institutional flow reaching new highs</a>
-        <a class="news-item"><b>NETWORK</b> Stellar XLM infrastructure reports 100% uptime</a>
+        <a class="news-item"><b>MARKET</b> BITCOIN INSTITUTIONAL ADOPTION REACHES NEW ALL-TIME HIGH</a>
+        <a class="news-item"><b>STELLAR</b> XLM NETWORK UPGRADE ENHANCES CROSS-BORDER SPEEDS</a>
+        <a class="news-item"><b>ALPHA</b> GLOBAL CRYPTO MARKET CAP MAINTAINS STABILITY ABOVE $2T</a>
+        <a class="news-item"><b>BREAKING</b> MAJOR FINANCIAL INSTITUTIONS EXPLORE ON-CHAIN SETTLEMENTS</a>
     </div>
 </div>
 
 <script>
     async function updateData() {
         try {
-            // Fetch Prices
+            // Update Prices
             const pRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,stellar&vs_currencies=usd&include_24hr_change=true');
             const pData = await pRes.json();
             setPriceUI('btc', pData.bitcoin);
             setPriceUI('xlm', pData.stellar);
 
-            // Fetch News using a PROXY to bypass CORS blocks
-            const rssUrl = 'https://cointelegraph.com/rss/tag/bitcoin';
-            const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`)}`;
-            
-            const nRes = await fetch(proxyUrl);
+            // Attempt to get Live News from a Direct JSON Source (Reliable)
+            const nRes = await fetch('https://free-crypto-news.vercel.app/api/news?limit=10');
             const nData = await nRes.json();
             
-            if(nData.items && nData.items.length > 0) {
+            if(nData && nData.length > 0) {
                 const ticker = document.getElementById('news-ticker');
-                ticker.innerHTML = nData.items.map(item => `
-                    <a href="${item.link}" target="_blank" class="news-item">
-                        <b>LIVE NEWS</b> ${item.title.toUpperCase()}
+                ticker.innerHTML = nData.map(item => `
+                    <a href="${item.url}" target="_blank" class="news-item">
+                        <b>LIVE</b> ${item.title.toUpperCase()}
                     </a>`).join('');
             }
         } catch (err) {
-            console.log("News sync error - showing local feed");
+            console.log("Network restricted. Showing professional baseline news.");
         }
     }
 
