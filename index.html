@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AlphaFlow Live Markets</title>
+    <title>AlphaFlow Terminal</title>
     <style>
         :root {
             --bg: #0b0e11;
@@ -12,16 +12,27 @@
             --text-dim: #848e9c;
             --up-color: #00ffad;
             --down-color: #ff3b69;
+            --accent: #08b1e7;
         }
 
         body { 
             background-color: var(--bg); 
             color: var(--text-main); 
-            font-family: 'Inter', -apple-system, sans-serif; 
-            display: flex; 
-            justify-content: center; 
-            gap: 20px; 
-            padding-top: 100px;
+            font-family: 'Inter', sans-serif; 
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Top Section: Price Cards */
+        .dashboard {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
         }
 
         .price-card {
@@ -29,79 +40,113 @@
             border: 1px solid #2b3139;
             border-radius: 20px;
             padding: 24px;
-            min-width: 220px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            min-width: 200px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .symbol { font-size: 13px; color: var(--text-dim); font-weight: 700; margin-bottom: 12px; letter-spacing: 1px; }
-        
-        .price { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
-
-        /* The Change Percentage Style */
-        .change {
-            font-size: 14px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
+        .symbol { font-size: 12px; color: var(--text-dim); font-weight: 800; margin-bottom: 10px; letter-spacing: 1px; }
+        .price { font-size: 28px; font-weight: 800; margin-bottom: 5px; }
+        .change { font-size: 14px; font-weight: 600; }
         .up { color: var(--up-color); }
         .down { color: var(--down-color); }
 
-        .label-24h { color: var(--text-dim); font-size: 11px; margin-left: 5px; }
+        /* Bottom Section: News Ticker */
+        .ticker-wrap {
+            width: 100%;
+            background: #1e2329;
+            border-top: 1px solid var(--accent);
+            padding: 10px 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .ticker {
+            display: inline-block;
+            animation: marquee 40s linear infinite;
+            padding-left: 100%;
+        }
+
+        .ticker:hover { animation-play-state: paused; cursor: pointer; }
+
+        .news-item {
+            display: inline-block;
+            padding: 0 40px;
+            color: var(--text-main);
+            font-size: 14px;
+            text-decoration: none;
+            border-right: 1px solid #333;
+        }
+
+        .news-item span { color: var(--accent); font-weight: bold; margin-right: 8px; }
+
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
     </style>
 </head>
 <body>
 
-    <div class="price-card">
-        <div class="symbol">BITCOIN / USD</div>
-        <div id="btc-price" class="price">...</div>
-        <div id="btc-change" class="change">--</div>
+    <div class="dashboard">
+        <div class="price-card">
+            <div class="symbol">BTC / USD</div>
+            <div id="btc-price" class="price">...</div>
+            <div id="btc-change" class="change">--</div>
+        </div>
+
+        <div class="price-card">
+            <div class="symbol">XLM / USD</div>
+            <div id="xlm-price" class="price">...</div>
+            <div id="xlm-change" class="change">--</div>
+        </div>
     </div>
 
-    <div class="price-card">
-        <div class="symbol">STELLAR / USD</div>
-        <div id="xlm-price" class="price">...</div>
-        <div id="xlm-change" class="change">--</div>
+    <div class="ticker-wrap">
+        <div id="news-ticker" class="ticker">
+            <a class="news-item"><span>LIVE</span> Loading latest market headlines...</a>
+        </div>
     </div>
 
     <script>
+        // 1. Fetch Prices
         async function fetchMarketData() {
             try {
-                // We add "include_24hr_change=true" to the API URL
-                const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,stellar&vs_currencies=usd&include_24hr_change=true';
-                const response = await fetch(url);
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,stellar&vs_currencies=usd&include_24hr_change=true');
+                const data = await response.json();
+                updatePriceUI('btc', data.bitcoin);
+                updatePriceUI('xlm', data.stellar);
+            } catch (e) { console.log("Price error"); }
+        }
+
+        function updatePriceUI(coin, data) {
+            document.getElementById(`${coin}-price`).innerText = '$' + (coin === 'btc' ? data.usd.toLocaleString() : data.usd.toFixed(4));
+            const change = data.usd_24h_change;
+            const el = document.getElementById(`${coin}-change`);
+            el.className = `change ${change >= 0 ? 'up' : 'down'}`;
+            el.innerText = (change >= 0 ? '▲ +' : '▼ ') + change.toFixed(2) + '%';
+        }
+
+        // 2. Fetch News (Using a free RSS-to-JSON helper)
+        async function fetchNews() {
+            try {
+                const rssUrl = encodeURIComponent('https://cointelegraph.com/rss/tag/bitcoin');
+                const response = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`);
                 const data = await response.json();
                 
-                updateUI('btc', data.bitcoin);
-                updateUI('xlm', data.stellar);
-            } catch (error) {
-                console.error("Market data sync failed");
-            }
+                const ticker = document.getElementById('news-ticker');
+                ticker.innerHTML = data.items.map(item => `
+                    <a href="${item.link}" target="_blank" class="news-item">
+                        <span>BREAKING</span> ${item.title}
+                    </a>
+                `).join('');
+            } catch (e) { console.log("News error"); }
         }
 
-        function updateUI(coin, coinData) {
-            const priceEl = document.getElementById(`${coin}-price`);
-            const changeEl = document.getElementById(`${coin}-change`);
-            
-            // 1. Update Price
-            const price = coin === 'btc' ? coinData.usd.toLocaleString() : coinData.usd.toFixed(4);
-            priceEl.innerText = '$' + price;
-
-            // 2. Update Percentage & Color
-            const change = coinData.usd_24h_change;
-            const formattedChange = change.toFixed(2) + '%';
-            
-            if (change >= 0) {
-                changeEl.innerHTML = `<span class="up">▲ +${formattedChange}</span> <span class="label-24h">24h</span>`;
-            } else {
-                changeEl.innerHTML = `<span class="down">▼ ${formattedChange}</span> <span class="label-24h">24h</span>`;
-            }
-        }
-
+        // Initialize
         fetchMarketData();
-        setInterval(fetchMarketData, 30000); // 30 second heartbeat
+        fetchNews();
+        setInterval(fetchMarketData, 30000);
+        setInterval(fetchNews, 600000); // Update news every 10 mins
     </script>
 </body>
 </html>
