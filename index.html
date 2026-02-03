@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,21 +7,14 @@
     <title>AlphaFlow Pro Terminal</title>
     <style>
         :root {
-            --bg: #0b0e11;
-            --card-bg: #161a1e;
-            --text-main: #ffffff;
-            --text-dim: #848e9c;
-            --up-color: #00ffad;
-            --down-color: #ff3b69;
-            --accent: #08b1e7;
-            --header-bg: #1e2329;
+            --bg: #0b0e11; --card-bg: #161a1e; --text-main: #ffffff;
+            --text-dim: #848e9c; --up-color: #00ffad; --down-color: #ff3b69;
+            --accent: #08b1e7; --header-bg: #1e2329;
         }
-
         body { 
             background-color: var(--bg); color: var(--text-main); font-family: 'Inter', sans-serif; 
             margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
-
         header {
             background: var(--header-bg); padding: 15px 30px; border-bottom: 1px solid #2b3139;
             display: flex; justify-content: space-between; align-items: center;
@@ -29,44 +23,34 @@
         .market-status { font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
         .status-dot { width: 8px; height: 8px; background: var(--up-color); border-radius: 50%; box-shadow: 0 0 10px var(--up-color); animation: blink 2s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
         main { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 25px; }
         .price-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-
         .price-card {
             background: var(--card-bg); border: 1px solid #2b3139; border-radius: 20px;
             padding: 25px; min-width: 240px; text-align: center; transition: 0.3s;
         }
         .price-card:hover { transform: translateY(-5px); border-color: var(--accent); }
-
         .symbol { font-size: 12px; color: var(--text-dim); font-weight: 800; margin-bottom: 10px; }
         .price { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
         .change { font-size: 15px; font-weight: 700; margin-bottom: 15px; display: flex; justify-content: center; gap: 5px; }
-        .up { color: var(--up-color); }
-        .down { color: var(--down-color); }
-
+        .up { color: var(--up-color); } .down { color: var(--down-color); }
         .trade-btn {
             display: block; width: 100%; padding: 12px 0; background: var(--accent);
             color: #000; text-decoration: none; border-radius: 10px; font-weight: 800; font-size: 13px;
         }
-
-        /* Fixed News Ticker */
         .ticker-wrap { background: #1e2329; border-top: 1px solid #2b3139; padding: 12px 0; overflow: hidden; white-space: nowrap; }
         .ticker { display: inline-block; animation: scroll 60s linear infinite; }
         .ticker:hover { animation-play-state: paused; }
         .news-item { display: inline-block; padding: 0 40px; color: var(--text-main); font-size: 14px; text-decoration: none; border-right: 1px solid #333; }
         .news-item b { color: var(--accent); margin-right: 10px; }
-
         @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
     </style>
 </head>
 <body>
-
 <header>
     <div class="logo">ALPHAFLOW <span style="color:white">PRO</span></div>
     <div class="market-status"><div class="status-dot"></div> NETWORK: ACTIVE</div>
 </header>
-
 <main>
     <div class="price-container">
         <div class="price-card">
@@ -83,23 +67,21 @@
         </div>
     </div>
 </main>
-
 <div class="ticker-wrap">
     <div id="news-ticker" class="ticker">
-        <a class="news-item"><b>SYNCING</b> Accessing global market intelligence...</a>
+        <a class="news-item"><b>SYNCING</b> Initializing secure data link for global news...</a>
     </div>
 </div>
-
 <script>
     async function updateData() {
         try {
-            // Update Prices
+            // Price Fetch
             const pRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,stellar&vs_currencies=usd&include_24hr_change=true');
             const pData = await pRes.json();
-            setUI('btc', pData.bitcoin);
-            setUI('xlm', pData.stellar);
+            setPriceUI('btc', pData.bitcoin);
+            setPriceUI('xlm', pData.stellar);
 
-            // Update News using a more reliable Public API
+            // News Fetch (Resilient Real-time Aggregator)
             const nRes = await fetch('https://free-crypto-news.vercel.app/api/news?limit=10');
             const nData = await nRes.json();
             const ticker = document.getElementById('news-ticker');
@@ -107,22 +89,19 @@
                 ticker.innerHTML = nData.map(item => `
                     <a href="${item.url}" target="_blank" class="news-item">
                         <b>ALPHA NEWS</b> ${item.title.toUpperCase()}
-                    </a>
-                `).join('');
+                    </a>`).join('');
             }
-        } catch (err) { console.log("Fetch Error: Check Internet Connection"); }
+        } catch (err) { console.log("System Sync Error"); }
     }
-
-    function setUI(id, data) {
+    function setPriceUI(id, data) {
         document.getElementById(`${id}-price`).innerText = '$' + (id === 'btc' ? data.usd.toLocaleString() : data.usd.toFixed(4));
         const chg = data.usd_24h_change;
         const el = document.getElementById(`${id}-change`);
         el.className = `change ${chg >= 0 ? 'up' : 'down'}`;
         el.innerText = (chg >= 0 ? '▲ +' : '▼ ') + chg.toFixed(2) + '%';
     }
-
     updateData();
-    setInterval(updateData, 30000); // 30s refresh to avoid API limits
+    setInterval(updateData, 30000); 
 </script>
 </body>
 </html>
